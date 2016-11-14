@@ -624,9 +624,9 @@ def read_problem(problem_file_name):
         with open(optfile) as f:
             opttour=np.fromfile(f, dtype=int, sep='\n') -1
         print opttour, len(opttour)
-    s = np.array(nodes)[opttour]
-    if anim:
-        frame0(s, nodes, total_length(nodes, s), "opt")
+        s = np.array(nodes)[opttour]
+        if anim:
+            frame0(s, nodes, total_length(nodes, s), "opt")
     return nodes
 
 #-----------------------------------------------------------------------------

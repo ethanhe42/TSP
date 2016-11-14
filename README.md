@@ -1,8 +1,15 @@
 TSP_Animation
 =============
 
-algorithms | greedy | 2opt | ga | optimal | random
+lenth | greedy | 2opt | sa | optimal | random
+p15 | 284.38 | 284.38 | 284.38 | 284.38 | 818
 att48 | 40526 | 35579 | 33607 | 33523 | 157530
+rand200 | 36226 | 31887 | 30944 | x | 327452
+
+time | greedy | 2opt | sa
+p15 | 1ms | 5ms | 11.12
+att48 | 6ms | .24s | 11s
+rand200 | 10ms | 18s | 14.5s
 
 The source code for an animation of four algorithms trying to solve a traveling salesman problem
 
