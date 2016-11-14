@@ -11,8 +11,11 @@ from node import length
 from node import total_length
 from node import dump
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 import argparse
+import os
+import os.path as osp
+from utils import *
 
 l_min = None
 pic = 0
@@ -21,12 +24,13 @@ ymin=0
 xmax=0
 ymax=0
 indent = 4
+anim = False
 
 def framec( solution, nc ):
     global xmax, ymax, xmin, ymin,indent
     global pic
     cities = [ (n.x,n.y) for n in solution ]
-    cities = numpy.array( cities )
+    cities = np.array( cities )
     plt.axis( [xmin-indent,xmax+indent,ymin-indent,ymax+indent])
     plt.axis('off')
     plt.plot(cities[:,0],cities[:,1],'ko')
@@ -40,9 +44,9 @@ def frame0(solution, nodes, l, title):
     global pic
     cities = [(n.x,n.y) for n in solution]
     cities.append(( solution[0].x, solution[0].y ))
-    cities = numpy.array( cities )
+    cities = np.array( cities )
     all_node = [(n.x,n.y) for n in nodes]
-    all_nodes = numpy.array(all_node)
+    all_nodes = np.array(all_node)
 
     plt.axis( [xmin-indent,xmax+indent,ymin-indent,ymax+indent])
     plt.axis('off')
@@ -60,12 +64,12 @@ def frame(nodes, solution, sn, t, c, y, x, z, gain):
     global nn
 
     cities = [(n.x,n.y) for n in solution]
-    cities = numpy.array(cities)
+    cities = np.array(cities)
 
     cities2 = [(c.x,c.y), (y.x,y.y)]
     cities3 = [(x.x,x.y), (z.x,z.y)]
-    cities2 = numpy.array(cities2)
-    cities3 = numpy.array(cities3)
+    cities2 = np.array(cities2)
+    cities3 = np.array(cities3)
 
     plt.plot(cities[:,0],cities[:,1],'bo-')
     #plt.scatter(cities[:,0], cities[:,1],s=50,c='k')
@@ -85,6 +89,7 @@ def frame(nodes, solution, sn, t, c, y, x, z, gain):
     plt.axis( [xmin-indent,xmax+indent,ymin-indent,ymax+indent])
     plt.axis('off')
 
+    l_min = total_length(nodes, solution)
     plt.title('(4)  SA Temp {} Best Tour {}\nSwaps {}  Gain {} '.format(t,l_min,nn,gain))
     plt.savefig( ("%05d" % pic)+'.png')
     plt.clf()
@@ -98,12 +103,12 @@ def frame4(nodes, solution, sn, c, y, x, z, gain):
 
     l_min = total_length( nodes, solution )
     cities = [ (n.x,n.y) for n in solution ]
-    cities = numpy.array( cities )
+    cities = np.array( cities )
 
     cities2 = [ (c.x,c.y), (y.x,y.y) ]
     cities3 = [ (x.x,x.y), (z.x,z.y) ]
-    cities2 = numpy.array( cities2 )
-    cities3 = numpy.array( cities3 )
+    cities2 = np.array( cities2 )
+    cities3 = np.array( cities3 )
 
     plt.plot(cities[:,0],cities[:,1],'bo-')
     #plt.scatter(cities[:,0], cities[:,1],s=50,c='k')
@@ -188,7 +193,7 @@ def optimize2opt(nodes, solution, number_of_nodes):
                     best_move = (ci,yi,xi,zi)
                     best = gain
 
-    print best_move, best
+    #print best_move, best
     if best_move is not None:
         (ci,yi,xi,zi) = best_move
         # This four are needed for the animation later on.
@@ -219,7 +224,10 @@ def optimize2opt(nodes, solution, number_of_nodes):
             n = n + 1
             zi = (zi+1)%number_of_nodes
         # Create a new animation frame
-        frame4(nodes, new_solution, number_of_nodes, c, y, x, z, gain)
+        if anim:
+            frame4(nodes, new_solution, number_of_nodes, c, y, x, z, gain)
+        else:
+            pass
         return (True,new_solution)
     else:
         return (False,solution)
@@ -290,7 +298,8 @@ def sa_optimize_step(nodes, solution, number_of_nodes, t):
                 zi = (zi+1)%number_of_nodes
 
             # Create an animation frame for this step
-            frame(nodes, new_solution, number_of_nodes, t, c, y, x, z, gain)
+            if anim:
+                frame(nodes, new_solution, number_of_nodes, t, c, y, x, z, gain)
 
             return new_solution
         else:
@@ -310,7 +319,7 @@ def greedy_algorithm(nodes):
     free_nodes.remove(n)
     solution.append( n )
     while len(free_nodes) > 0:
-        print(len(free_nodes))
+        #print(len(free_nodes))
         min_l = None
         min_n = None
         for c in free_nodes:
@@ -368,7 +377,7 @@ def sa_algorithm(nodes):
             i = 0
             # Compute the length of the solution
             l = total_length( nodes, solution )
-            print "    ", l, t, nn
+            #print "    ", l, t, nn
             # Lower the temperature.
             # The slower we do this, the better then final solution
             # but also the more times it takes.
@@ -381,7 +390,7 @@ def sa_algorithm(nodes):
             elif l < l_min:
                 # Yup it is, remember it.
                 l_min = l
-                print "++", l, t
+                #print "++", l, t
                 best_solution = solution[:]
             else:
                 pass
@@ -503,6 +512,7 @@ else:
     do_sa     = True
 
 def create_animation(nodes):
+    mytimer = timer()
     global nn
     global l_min
     number_of_nodes = len( nodes )
@@ -511,7 +521,9 @@ def create_animation(nodes):
     if do_greedy:
         # Greedy Algorithm
         print 'Computing greedy path'
+        mytimer.tic()
         solution = greedy_algorithm(nodes)
+        mytimer.toc()
     else:
         # For debugging
         solution = [n for n in nodes]
@@ -519,54 +531,73 @@ def create_animation(nodes):
     if do_intro:
         # Only cities
         solution0 = [n for n in nodes]
-        for i in range(2, number_of_nodes):
-            s = solution0[0:i]
-            framec(s, number_of_nodes)
-        # Show all cities for an additional 20 frames.
-        for i in range(20):
-            framec(s, number_of_nodes)
+        #for i in range(2, number_of_nodes):
+        #    s = solution0[0:i]
+        #    framec(s, number_of_nodes)
+        ## Show all cities for an additional 20 frames.
+        #for i in range(20):
+        #    framec(s, number_of_nodes)
 
         # Animate the Random Search
-        for i in range(2, number_of_nodes):
-            s = solution0[0:i]
-            frame0(s, nodes, total_length(nodes, s), "(1)  Random Path")
+        if anim:
+            for i in range(2, number_of_nodes):
+                s = solution0[0:i]
+                frame0(s, nodes, total_length(nodes, s), "(1)  Random Path")
         s = solution0
-        for i in range(60):
-            frame0(s, nodes, total_length(nodes, s), "(1)  Random Path")
+        if anim:
+            for i in range(60):
+                frame0(s, nodes, total_length(nodes, s), "(1)  Random Path")
+        else:
+            print total_length(nodes, s)
 
         # Animate the Greedy Search
-        for i in range(2, number_of_nodes):
-            s = solution[0:i]
-            frame0(s, nodes, total_length(nodes, s), "(2)  Greedy Search")
+        if anim:
+            for i in range(2, number_of_nodes):
+                s = solution[0:i]
+                frame0(s, nodes, total_length(nodes, s), "(2)  Greedy Search")
         s = solution
-        for i in range(60):
-            frame0(s, nodes, total_length(nodes, s), "(2)  Greedy Search")
+        if anim:
+            for i in range(60):
+                frame0(s, nodes, total_length(nodes, s), "(2)  Greedy Search")
+        else:
+            print total_length(nodes, s)
 
     # Under construction
     if do_perry:
         solution = miss_perry_s_compass(nodes)
-        for i in range(2, number_of_nodes):
-            s = solution[0:i]
-            frame0(s, nodes, total_length(nodes, s), "(1)  Random Path")
-        for i in range(60):
-            frame0(solution, nodes, total_length(nodes, s), "(3)  Miss Perry")
+        if anim:
+            for i in range(2, number_of_nodes):
+                s = solution[0:i]
+                frame0(s, nodes, total_length(nodes, s), "(1)  Random Path")
+            for i in range(60):
+                frame0(solution, nodes, total_length(nodes, s), "(3)  Miss Perry")
+        else:
+            print total_length(nodes, solution)
 
     if do_2opt:
         print("2-Opt")
         # Run 2-Opt algorithm and create animation frames for each step
+        mytimer.tic()
         s = two_opt_algorithm(nodes)
+        mytimer.toc()
         # Show the best solution for an additional 60 frames.
-        for i in range(60):
-            frame0(s, nodes, total_length(nodes, s), "(4)  2-Opt")
+        if anim:
+            for i in range(60):
+                frame0(s, nodes, total_length(nodes, s), "(4)  2-Opt")
+        else:
+            print total_length(nodes, s)
 
     if do_sa:
         #=== Simulated Annealing
         print("SA")
         # Run SA algorithm and create animation frames for each step
+        mytimer.tic()
         s = sa_algorithm(nodes)
+        mytimer.toc()
         # Show the best solution for an additional 60 frames.
-        for i in range(60):
-            frame0(s, nodes, total_length(nodes, s), "(5)  SA")
+        if anim:
+            for i in range(60):
+                frame0(s, nodes, total_length(nodes, s), "(5)  SA")
 
     return s
 
@@ -588,7 +619,14 @@ def read_problem(problem_file_name):
             if y < ymin: ymin = y
             nodes.append(Node(i, x, y))
             i = i + 1
-
+    optfile=problem_file_name+".opt"
+    if osp.exists(optfile):
+        with open(optfile) as f:
+            opttour=np.fromfile(f, dtype=int, sep='\n') -1
+        print opttour, len(opttour)
+    s = np.array(nodes)[opttour]
+    if anim:
+        frame0(s, nodes, total_length(nodes, s), "opt")
     return nodes
 
 #-----------------------------------------------------------------------------
@@ -607,6 +645,7 @@ def solve(problem_file_name):
     return solution_string
 
 def parg():
+    global anim
     parser = argparse.ArgumentParser("tsp")
     parser.add_argument('-d',
                         dest='dataset',
@@ -614,9 +653,11 @@ def parg():
                         default='att48.txt',
                         type=str)
     parser.add_argument('--anim',
+                        dest='anim',
                         help='animation',
                         action='store_true')
     args = parser.parse_args()
+    anim = args.anim
     return args
 
 if __name__ == '__main__':

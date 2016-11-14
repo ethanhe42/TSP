@@ -1,6 +1,9 @@
 TSP_Animation
 =============
 
+algorithms | greedy | 2opt | ga | optimal | random
+att48 | 40526 | 35579 | 33607 | 33523 | 157530
+
 The source code for an animation of four algorithms trying to solve a traveling salesman problem
 
 You can find the animation on:
