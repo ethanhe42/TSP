@@ -33,12 +33,12 @@ rand200 | 10ms | 18s | 14.5s
 
 If you find the code useful in your research, please consider citing:
 
-    @article{he2017estimated,
-      title={Estimated Depth Map Helps Image Classification},
-      author={He, Yihui},
-      journal={arXiv preprint arXiv:1709.07077},
-      year={2017}
-    }
+      @article{he2017empirical,
+        title={An Empirical Analysis of Approximation Algorithms for the Euclidean Traveling Salesman Problem},
+        author={He, Yihui and Xiang, Ming},
+        journal={arXiv preprint arXiv:1705.09058},
+        year={2017}
+      }
 
 [Paper](https://github.com/yihui-he/TSP-paper) and [实验报告](https://github.com/yihui-he/TSP-report) latex code are also available.
 
